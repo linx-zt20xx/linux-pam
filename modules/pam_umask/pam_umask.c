@@ -200,6 +200,13 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
   if (flags & PAM_SILENT)
     options.silent = 1;
 
+  if (options.umask != NULL)
+  {
+    set_umask (options.umask);
+    free (options.login_umask);
+    options.umask = options.login_umask = NULL;
+  }
+
   /* get the user name. */
   if ((retval = pam_get_user (pamh, &name, NULL)) != PAM_SUCCESS)
     {
@@ -213,13 +220,6 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
     {
       pam_syslog (pamh, LOG_NOTICE, "account for %s not found", name);
       return PAM_USER_UNKNOWN;
-    }
-
-  if (options.umask != NULL)
-    {
-      set_umask (options.umask);
-      free (options.login_umask);
-      options.umask = options.login_umask = NULL;
     }
 
   setup_limits_from_gecos (pamh, &options, pw);
